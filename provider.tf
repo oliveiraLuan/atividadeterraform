@@ -17,10 +17,10 @@ resource "azurerm_resource_group" "rg_sample" {
   location = "westus2"
 }
 
-resource "azurerm_mysql_server" "example" {
-  name                = "example-mysqlserver"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
+resource "azurerm_mysql_server" "luanmysql" {
+  name                = "luanmysql"
+  location            = azurerm_resource_group.rg_sample.location
+  resource_group_name = azurerm_resource_group.rg_sample.name
 
   administrator_login          = "mysqladminun"
   administrator_login_password = "H@Sh1CoR3!"
@@ -38,13 +38,26 @@ resource "azurerm_mysql_server" "example" {
   ssl_minimal_tls_version_enforced  = "TLS1_2"
 }
 
-resource "aws_instance" "web" {
+resource "null_resource" "db" {
   # ...
 
+   triggers = {
+            order = azurerm_linux_virtual_machine.luanvm.id
+        }
+
   provisioner "remote-exec" {
-    inline = [
-      "puppet apply",
-      "consul join ${aws_instance.web.private_ip}",
-    ]
+
+        connection {
+            type     = "ssh"
+            user     = "azureuser"
+            password = "4zureUser!"
+            host     = azurerm_public_ip.public_sample.ip_address
+        }
+
+        inline = [
+            "sudo apt-get -y update",
+            "sudo apt-get install -y mysql-server-5.7",
+            "sudo service mysql start"
+        ]
   }
 }
